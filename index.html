@@ -1,0 +1,453 @@
+<!doctype html>
+<title>3,000円チャレンジ</title>
+<style>
+  :root {
+    --bg: #F7F3EC;
+    --ink: #26384A;
+    --ink-soft: #5C6B75;
+    --accent: #C1652F;
+    --sea: #26384A;
+    --sea-deep: #1B2836;
+    --sea-line: #33495D;
+    --highlight: #E4B363;
+    --card: #FFFFFF;
+    --on-scrim: #F7F3EC;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17222D;
+      --ink: #F3EEE3;
+      --ink-soft: #9FAEBA;
+      --accent: #E28A50;
+      --sea: #0E1720;
+      --sea-deep: #0A1119;
+      --sea-line: #24333F;
+      --highlight: #E7BE72;
+      --card: #1E2A36;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17222D;
+    --ink: #F3EEE3;
+    --ink-soft: #9FAEBA;
+    --accent: #E28A50;
+    --sea: #0E1720;
+    --sea-deep: #0A1119;
+    --sea-line: #24333F;
+    --highlight: #E7BE72;
+    --card: #1E2A36;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', system-ui, sans-serif;
+  }
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  a { color: var(--accent); }
+
+  .stage {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .masthead h1 {
+    font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+    font-weight: 900;
+    font-size: clamp(20px, 5vw, 28px);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .masthead .tag {
+    font-size: 13px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+
+  .hud {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 2px 4px;
+  }
+  .hud .score-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .hud .score {
+    font-variant-numeric: tabular-nums;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 900;
+    font-size: 26px;
+  }
+  .hud .best {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .frame {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--card);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    line-height: 0;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+
+  .banner {
+    position: absolute;
+    left: 50%;
+    top: 22%;
+    transform: translate(-50%, -10px);
+    background: var(--accent);
+    color: var(--bg);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+  }
+  .banner.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 20px;
+    background: color-mix(in srgb, var(--sea) 78%, transparent);
+    color: var(--on-scrim);
+    line-height: 1.6;
+  }
+  .overlay h2 {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: clamp(20px, 6vw, 28px);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .overlay p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--highlight);
+    max-width: 42ch;
+  }
+  .overlay .cta {
+    margin-top: 6px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .overlay[hidden] { display: none; }
+
+  .note {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+</style>
+
+<div class="stage">
+  <div class="masthead">
+    <h1>3,000円チャレンジ</h1>
+    <span class="tag">みなと｜AIと会社をつくる実験</span>
+  </div>
+
+  <div class="hud">
+    <span class="score-label">今の売上</span>
+    <span class="score" id="score">¥0</span>
+    <span class="best" id="best">自己ベスト ¥0</span>
+  </div>
+
+  <div class="frame">
+    <canvas id="game" width="1280" height="640" aria-label="波を飛び越えて売上を伸ばすゲーム"></canvas>
+    <div class="banner" id="banner"></div>
+
+    <div class="overlay" id="startOverlay">
+      <h2>波を飛び越えて、まず月3,000円。</h2>
+      <p>スペースキー、または画面タップでジャンプ。波にぶつかったら終了です。</p>
+      <div class="cta">タップして開始</div>
+    </div>
+
+    <div class="overlay" id="overOverlay" hidden>
+      <h2 id="overTitle">沈没</h2>
+      <p id="overBody"></p>
+      <div class="cta">タップしてもう一度</div>
+    </div>
+  </div>
+
+  <p class="note">
+    実在するONZE LTD.の収益目標（3,000円→5,000→10,000→15,000→30,000円）が、
+    そのままこのゲームのマイルストーンになっています。
+  </p>
+</div>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+
+<script>
+(function () {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const bannerEl = document.getElementById('banner');
+  const startOverlay = document.getElementById('startOverlay');
+  const overOverlay = document.getElementById('overOverlay');
+  const overTitle = document.getElementById('overTitle');
+  const overBody = document.getElementById('overBody');
+
+  const MILESTONES = [3000, 5000, 10000, 15000, 30000];
+  const MILESTONE_LABELS = {
+    3000: '最初の目標、月3,000円 達成！',
+    5000: '月5,000円 突破！',
+    10000: '月10,000円 突破！',
+    15000: '月15,000円 突破！',
+    30000: '月30,000円 突破、再投資フェーズへ！'
+  };
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem('minato3000_best') || '0', 10) || 0; } catch (e) {}
+  bestEl.textContent = '自己ベスト ¥' + best.toLocaleString();
+
+  const groundY = H * 0.72;
+  const boatX = W * 0.18;
+
+  let state = 'ready'; // ready | playing | over
+  let boatY, vy, gravity, jumpV, speed, obstacles, spawnTimer, distance, score, passedMilestones, lastTime;
+
+  function reset() {
+    boatY = groundY;
+    vy = 0;
+    gravity = 2600;
+    jumpV = -980;
+    speed = 340;
+    obstacles = [];
+    spawnTimer = 0;
+    distance = 0;
+    score = 0;
+    passedMilestones = new Set();
+    lastTime = null;
+  }
+  reset();
+
+  function drawBoat(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    const s = 60;
+    ctx.fillStyle = getCss('--ink');
+    // hull
+    ctx.beginPath();
+    ctx.moveTo(-0.42 * s, 0.10 * s);
+    ctx.lineTo(0.42 * s, 0.10 * s);
+    ctx.lineTo(0.26 * s, 0.34 * s);
+    ctx.lineTo(-0.26 * s, 0.34 * s);
+    ctx.closePath();
+    ctx.fill();
+    // mast
+    ctx.strokeStyle = getCss('--ink');
+    ctx.lineWidth = s * 0.05;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, 0.10 * s);
+    ctx.lineTo(0, -0.62 * s);
+    ctx.stroke();
+    // sail
+    ctx.beginPath();
+    ctx.moveTo(0, -0.58 * s);
+    ctx.lineTo(0.46 * s, 0.06 * s);
+    ctx.lineTo(0, 0.06 * s);
+    ctx.closePath();
+    ctx.fill();
+    // flag dot
+    ctx.fillStyle = getCss('--accent');
+    ctx.beginPath();
+    ctx.arc(0, -0.66 * s, s * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function getCss(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#26384A';
+  }
+
+  function spawnObstacle() {
+    const h = 46 + Math.random() * 46;
+    obstacles.push({ x: W + 20, w: 34 + Math.random() * 14, h });
+  }
+
+  function showBanner(text) {
+    bannerEl.textContent = text;
+    bannerEl.classList.add('show');
+    clearTimeout(showBanner._t);
+    showBanner._t = setTimeout(() => bannerEl.classList.remove('show'), 1600);
+  }
+
+  function update(dt) {
+    // physics
+    vy += gravity * dt;
+    boatY += vy * dt;
+    if (boatY > groundY) { boatY = groundY; vy = 0; }
+
+    // obstacles
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawnObstacle();
+      spawnTimer = 0.95 + Math.random() * 0.9;
+    }
+    speed = Math.min(560, speed + dt * 6);
+    for (const o of obstacles) o.x -= speed * dt;
+    obstacles = obstacles.filter(o => o.x + o.w > -10);
+
+    // score
+    distance += speed * dt;
+    score = Math.floor(distance * 3.2 / 10) * 10;
+    scoreEl.textContent = '¥' + score.toLocaleString();
+
+    for (const m of MILESTONES) {
+      if (score >= m && !passedMilestones.has(m)) {
+        passedMilestones.add(m);
+        showBanner(MILESTONE_LABELS[m]);
+      }
+    }
+
+    // collision (boat treated as a small circle near hull center)
+    const bx = boatX, by = boatY + 6, br = 20;
+    for (const o of obstacles) {
+      const ox = o.x, ow = o.w, oy = groundY + 24, oh = o.h;
+      const closestX = Math.max(ox, Math.min(bx, ox + ow));
+      const closestY = Math.max(oy - oh, Math.min(by, oy));
+      const dx = bx - closestX, dy = by - closestY;
+      if (dx * dx + dy * dy < br * br) {
+        gameOver();
+        return;
+      }
+    }
+  }
+
+  function drawWave(baseY, amp, lineWidth, color, phase) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    const t = performance.now() / 900;
+    for (let x = 0; x <= W; x += 8) {
+      const y = baseY + Math.sin((x / 90) + t + phase) * amp;
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = getCss('--bg');
+    ctx.fillRect(0, 0, W, H);
+
+    // sea band
+    ctx.fillStyle = getCss('--sea');
+    ctx.fillRect(0, groundY + 16, W, H - groundY - 16);
+    drawWave(groundY + 30, 6, 4, getCss('--sea-line'), 0);
+    drawWave(groundY + 54, 5, 3, getCss('--sea-line'), 1.4);
+
+    // obstacles (swell humps)
+    ctx.fillStyle = getCss('--sea');
+    for (const o of obstacles) {
+      const oy = groundY + 24;
+      ctx.beginPath();
+      ctx.moveTo(o.x, oy);
+      ctx.quadraticCurveTo(o.x + o.w / 2, oy - o.h, o.x + o.w, oy);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    drawBoat(boatX, boatY);
+  }
+
+  function loop(ts) {
+    if (state !== 'playing') return;
+    if (lastTime == null) lastTime = ts;
+    let dt = (ts - lastTime) / 1000;
+    dt = Math.min(dt, 0.033);
+    lastTime = ts;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function jump() {
+    if (state === 'ready') { start(); return; }
+    if (state === 'over') { start(); return; }
+    if (boatY >= groundY - 1) vy = jumpV;
+  }
+
+  function start() {
+    reset();
+    state = 'playing';
+    startOverlay.hidden = true;
+    overOverlay.hidden = true;
+    requestAnimationFrame(loop);
+  }
+
+  function gameOver() {
+    state = 'over';
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem('minato3000_best', String(best)); } catch (e) {}
+    }
+    bestEl.textContent = '自己ベスト ¥' + best.toLocaleString();
+    overTitle.textContent = score >= 3000 ? '沈没（でも黒字ラインは超えた）' : '沈没';
+    overBody.textContent = '今回の売上 ¥' + score.toLocaleString() + '。もう一度、タップかスペースで再挑戦。';
+    overOverlay.hidden = false;
+    draw();
+  }
+
+  canvas.addEventListener('pointerdown', jump);
+  startOverlay.addEventListener('pointerdown', jump);
+  overOverlay.addEventListener('pointerdown', jump);
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); jump(); }
+  });
+
+  draw();
+})();
+</script>
