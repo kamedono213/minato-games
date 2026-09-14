@@ -9,8 +9,9 @@ const TUTORIAL_STEPS = [
     paragraphs: [
       "生き物の体の特徴（形質）は、体の中にある「遺伝子」という設計図によって決まる。同じ遺伝子には、いくつかのバリエーション（対立遺伝子）があることがある。",
       "例えば「体の色」を決める遺伝子に、「ふつうの色になる対立遺伝子」と「パステルという明るい色になる対立遺伝子」の2種類がある、というイメージ。",
-      "生き物は同じ遺伝子を父親由来・母親由来の2つずつ持っている。",
+      "生き物は同じ遺伝子を父親由来・母親由来の2つずつ持っている。下の図のように、卵ができる時には、それぞれの親が持つ2つのうち「どちらか1つ」だけがランダムに渡される。",
     ],
+    diagram: "gamete",
   },
   {
     title: "2. 顕性（優性）と潜性（劣性）",
@@ -30,7 +31,13 @@ const TUTORIAL_STEPS = [
       "・Aa → 見た目はふつう（アルビノを1つ持っているが見た目には出ない、これを「ヘテロ」と呼ぶ）",
       "・aa → アルビノの見た目",
     ],
-    punnett: { left: ["A", "a"], top: ["A", "a"], labels: { AA: "ふつう", Aa: "ふつう(ヘテロ)", aA: "ふつう(ヘテロ)", aa: "アルビノ" } },
+    punnett: {
+      left: ["A", "a"],
+      top: ["A", "a"],
+      labels: { AA: "ふつう", Aa: "ふつう(ヘテロ)", aA: "ふつう(ヘテロ)", aa: "アルビノ" },
+      colors: { AA: "#6b8f5a", Aa: "#6b8f5a", aA: "#6b8f5a", aa: GENE_BY_ID.albino.color },
+    },
+    punnettDiagram: { leftColor: "#6b8f5a", topColor: "#6b8f5a" },
   },
   {
     title: "4. 顕性（優性）の例: スパイダー",
@@ -40,7 +47,13 @@ const TUTORIAL_STEPS = [
       "・Ss → スパイダーの見た目（1つ持っているだけで見た目に出る）",
       "・ss → スパイダー同士を掛け合わせても、この組み合わせが実際に育つ例はほとんど確認されておらず、孵化しないと考えられている",
     ],
-    punnett: { left: ["S", "s"], top: ["S", "s"], labels: { SS: "ふつう", Ss: "スパイダー", sS: "スパイダー", ss: "孵化しない(推定)" } },
+    punnett: {
+      left: ["S", "s"],
+      top: ["S", "s"],
+      labels: { SS: "ふつう", Ss: "スパイダー", sS: "スパイダー", ss: "孵化しない(推定)" },
+      colors: { SS: "#6b8f5a", Ss: GENE_BY_ID.spider.color, sS: GENE_BY_ID.spider.color, ss: "#8a4a4a" },
+    },
+    punnettDiagram: { leftColor: GENE_BY_ID.spider.color, topColor: GENE_BY_ID.spider.color },
   },
   {
     title: "5. 不完全顕性・共優性: パステル",
@@ -49,7 +62,13 @@ const TUTORIAL_STEPS = [
       "パステルはこのタイプで、1つ持つと明るい色（パステル）、2つとも持つとさらに明るい色（スーパーパステル）になる。",
       "1つの時と2つの時で見た目が違う、というのが不完全顕性・共優性の特徴。",
     ],
-    punnett: { left: ["P", "p"], top: ["P", "p"], labels: { PP: "ふつう", Pp: "パステル", pP: "パステル", pp: "スーパーパステル" } },
+    punnett: {
+      left: ["P", "p"],
+      top: ["P", "p"],
+      labels: { PP: "ふつう", Pp: "パステル", pP: "パステル", pp: "スーパーパステル" },
+      colors: { PP: "#6b8f5a", Pp: GENE_BY_ID.pastel.color, pP: GENE_BY_ID.pastel.color, pp: "#f5da7a" },
+    },
+    punnettDiagram: { leftColor: GENE_BY_ID.pastel.color, topColor: GENE_BY_ID.pastel.color },
   },
   {
     title: "6. パネットスクエア（掛け合わせ表）の読み方",
