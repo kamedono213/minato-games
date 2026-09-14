@@ -1,14 +1,27 @@
 // 画面遷移・描画ロジック
 
 const APP = document.getElementById("app");
-const TABS = [
-  { id: "collection", label: "マイコレクション" },
-  { id: "breed", label: "交配" },
-  { id: "shop", label: "ショップ" },
-  { id: "orders", label: "依頼" },
-  { id: "dex", label: "図鑑" },
-  { id: "tutorial", label: "チュートリアル" },
+const TAB_GROUPS = [
+  {
+    id: "learn",
+    label: "まなぶ",
+    tabs: [
+      { id: "tutorial", label: "チュートリアル" },
+      { id: "dex", label: "図鑑" },
+    ],
+  },
+  {
+    id: "play",
+    label: "あそぶ",
+    tabs: [
+      { id: "collection", label: "マイコレクション" },
+      { id: "breed", label: "交配" },
+      { id: "shop", label: "ショップ" },
+      { id: "orders", label: "依頼" },
+    ],
+  },
 ];
+const TABS = TAB_GROUPS.flatMap((g) => g.tabs);
 
 let currentTab = "collection";
 let selectedForPedigree = null;
@@ -90,21 +103,28 @@ function renderStatusBar() {
 }
 
 function renderNav() {
-  const nav = el("nav", { class: "tabbar" });
-  for (const t of TABS) {
-    nav.appendChild(
-      el(
-        "button",
-        {
-          class: "tab" + (currentTab === t.id ? " active" : ""),
-          onclick: () => {
-            currentTab = t.id;
-            render();
+  const nav = el("nav", { class: "tabgroups" });
+  for (const group of TAB_GROUPS) {
+    const groupWrap = el("div", { class: "tabgroup tabgroup-" + group.id });
+    groupWrap.appendChild(el("div", { class: "tabgroup-label" }, group.label));
+    const row = el("div", { class: "tabbar" });
+    for (const t of group.tabs) {
+      row.appendChild(
+        el(
+          "button",
+          {
+            class: "tab" + (currentTab === t.id ? " active" : ""),
+            onclick: () => {
+              currentTab = t.id;
+              render();
+            },
           },
-        },
-        t.label
-      )
-    );
+          t.label
+        )
+      );
+    }
+    groupWrap.appendChild(row);
+    nav.appendChild(groupWrap);
   }
   return nav;
 }
@@ -419,6 +439,13 @@ function renderTutorial() {
     }
     wrap.appendChild(section);
   }
+
+  const aboutCard = el("section", { class: "about-card" });
+  aboutCard.appendChild(el("h3", {}, "保護者・先生の方へ"));
+  aboutCard.appendChild(el("p", {}, "このアプリの遺伝の説明は、2021年度から学校の理科で使われている「顕性・潜性」という正式な用語に沿っています。"));
+  aboutCard.appendChild(el("p", {}, "広告は表示されず、個人情報の入力・送信も一切ありません。データはこの端末のブラウザ内だけに保存されます。"));
+  wrap.appendChild(aboutCard);
+
   return wrap;
 }
 

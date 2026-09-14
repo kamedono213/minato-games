@@ -9,6 +9,8 @@
   --accent-contrast: oklch(0.98 0.01 145);
   --accent-2: oklch(0.68 0.14 70);
   --accent-2-contrast: oklch(0.22 0.05 70);
+  --learn-accent: oklch(0.56 0.13 235);
+  --learn-accent-contrast: oklch(0.98 0.01 235);
   --shadow: 0 1px 2px oklch(0.3 0.03 85 / 0.08), 0 6px 18px oklch(0.3 0.03 85 / 0.08);
 }
 
@@ -24,6 +26,8 @@
     --accent-contrast: oklch(0.14 0.03 145);
     --accent-2: oklch(0.72 0.13 70);
     --accent-2-contrast: oklch(0.16 0.04 70);
+    --learn-accent: oklch(0.72 0.11 235);
+    --learn-accent-contrast: oklch(0.16 0.03 235);
     --shadow: 0 1px 2px oklch(0 0 0 / 0.4), 0 8px 22px oklch(0 0 0 / 0.35);
   }
 }
@@ -137,7 +141,7 @@ body {
 
 .onboarding { padding-block: 16px; }
 .ob-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.ob-progress { font-family: "Zen Maru Gothic", sans-serif; font-weight: 800; color: var(--accent); font-size: 13px; }
+.ob-progress { font-family: "Zen Maru Gothic", sans-serif; font-weight: 800; color: var(--learn-accent); font-size: 13px; }
 .ob-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -184,12 +188,25 @@ body {
 .ob-option.correct { border-color: transparent; background: oklch(0.6 0.13 150); color: #fff; }
 .ob-option.wrong { border-color: transparent; background: oklch(0.58 0.16 25); color: #fff; }
 
+.tabgroups { display: flex; flex-direction: column; gap: 2px; padding-block: 10px 4px; border-bottom: 1px solid var(--border); }
+.tabgroup { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tabgroup-label {
+  flex-shrink: 0;
+  font-family: "Zen Maru Gothic", sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  width: 46px;
+}
+.tabgroup-learn .tabgroup-label { color: var(--learn-accent); }
+.tabgroup-play .tabgroup-label { color: var(--accent); }
+
 .tabbar {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-block: 12px;
-  border-bottom: 1px solid var(--border);
+  flex: 1;
+  padding-block: 6px;
 }
 .tab {
   flex-shrink: 0;
@@ -203,7 +220,12 @@ body {
   color: var(--text-muted);
   cursor: pointer;
 }
-.tab.active {
+.tabgroup-learn .tab.active {
+  background: var(--learn-accent);
+  color: var(--learn-accent-contrast);
+  border-color: transparent;
+}
+.tabgroup-play .tab.active {
   background: var(--accent);
   color: var(--accent-contrast);
   border-color: transparent;
@@ -298,7 +320,7 @@ body {
 }
 .dex-swatch { width: 100%; height: 36px; border-radius: 10px; margin-bottom: 10px; }
 .dex-name { font-family: "Zen Maru Gothic", sans-serif; font-weight: 700; font-size: 14px; }
-.dex-type { color: var(--accent); font-size: 12px; font-weight: 700; margin: 4px 0 8px; }
+.dex-type { color: var(--learn-accent); font-size: 12px; font-weight: 700; margin: 4px 0 8px; }
 .dex-note { color: var(--text-muted); font-size: 12.5px; line-height: 1.6; }
 
 .tutorial-step {
@@ -310,6 +332,16 @@ body {
   margin-bottom: 16px;
 }
 .tutorial-step h3 { font-family: "Zen Maru Gothic", sans-serif; margin-top: 0; }
+
+.about-card {
+  background: var(--surface-2);
+  border: 1px dashed var(--learn-accent);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 8px;
+}
+.about-card h3 { font-family: "Zen Maru Gothic", sans-serif; margin: 0 0 8px; color: var(--learn-accent); font-size: 15px; }
+.about-card p { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; margin: 0 0 6px; }
 .tutorial-step p { line-height: 1.8; font-size: 14.5px; }
 
 table.punnett { border-collapse: collapse; margin-top: 12px; width: 100%; overflow-x: auto; display: block; }
