@@ -16,6 +16,12 @@ let breedSelection = { motherId: null, fatherId: null, clutchSize: 4 };
 let lastClutch = null;
 let toast = null;
 
+let obIndex = 0;
+let obDemoResults = {};
+let obPredictSelection = new Set();
+let obPredictRevealed = false;
+let obPredictActual = null;
+
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -42,6 +48,10 @@ function showToast(text) {
 
 function render() {
   APP.innerHTML = "";
+  if (!loadWorld().onboardingDone) {
+    APP.appendChild(renderOnboarding());
+    return;
+  }
   APP.appendChild(renderStatusBar());
   APP.appendChild(renderNav());
   const content = el("main", { class: "content" });
@@ -91,9 +101,18 @@ function snakeLabel(snake) {
 
 function snakeCard(snake, opts = {}) {
   const wrapper = el("div", { class: "snake-card" });
-  wrapper.appendChild(el("div", { class: "snake-art", html: svgSnake(snake.genotype, 160) }));
+  wrapper.appendChild(el("div", { class: "snake-art", html: svgSnake(snake.genotype, 160, snake) }));
+  if (snake.mutationGeneId) wrapper.appendChild(el("div", { class: "mutation-badge" }, "✨ 突然変異！"));
   wrapper.appendChild(el("div", { class: "snake-name" }, snakeLabel(snake)));
   wrapper.appendChild(el("div", { class: "snake-morph" }, morphLabel(snake.genotype)));
+  if (snake.mutationGeneId) {
+    wrapper.appendChild(el("div", { class: "snake-mutation-note" }, `${GENE_BY_ID[snake.mutationGeneId].nameJa}が偶然発現した`));
+  }
+  if (snake.flareTraits && snake.flareTraits.length > 0) {
+    wrapper.appendChild(
+      el("div", { class: "snake-flare-note" }, `${snake.flareTraits.map((id) => GENE_BY_ID[id].nameJa).join("・")}のヘテロ持ちかもしれない特徴あり`)
+    );
+  }
   const actions = el("div", { class: "snake-actions" });
   actions.appendChild(
     el(
@@ -376,7 +395,7 @@ function renderTutorial() {
 function pedigreeNode(node, label) {
   if (!node) return el("div", { class: "pedigree-node empty" }, "？");
   const box = el("div", { class: "pedigree-node" });
-  box.appendChild(el("div", { class: "pedigree-art", html: svgSnake(node.snake.genotype, 70) }));
+  box.appendChild(el("div", { class: "pedigree-art", html: svgSnake(node.snake.genotype, 70, node.snake) }));
   box.appendChild(el("div", { class: "pedigree-label" }, `${label ? label + ": " : ""}${specimenNumber(node.snake)}`));
   box.appendChild(el("div", { class: "pedigree-morph" }, morphLabel(node.snake.genotype)));
   return box;
@@ -421,6 +440,187 @@ function renderPedigreeModal(snakeId) {
   );
   overlay.appendChild(modal);
   return overlay;
+}
+
+// ---- ガイド付きチュートリアル(オンボーディング) ----
+
+function demoSnakeCard(genotype, label) {
+  const box = el("div", { class: "snake-card" });
+  box.appendChild(el("div", { class: "snake-art", html: svgSnake(genotype, 120) }));
+  if (label) box.appendChild(el("div", { class: "snake-name" }, label));
+  box.appendChild(el("div", { class: "snake-morph" }, morphLabel(genotype)));
+  return box;
+}
+
+function obGoTo(index) {
+  obIndex = Math.max(0, Math.min(ONBOARDING_STEPS.length - 1, index));
+  render();
+}
+
+function obNavButtons(canNext) {
+  const row = el("div", { class: "ob-nav" });
+  if (obIndex > 0) row.appendChild(el("button", { class: "btn-secondary", onclick: () => obGoTo(obIndex - 1) }, "もどる"));
+  if (canNext) row.appendChild(el("button", { class: "btn-primary", onclick: () => obGoTo(obIndex + 1) }, "つぎへ"));
+  return row;
+}
+
+function renderOnboarding() {
+  const step = ONBOARDING_STEPS[obIndex];
+  const wrap = el("div", { class: "onboarding" });
+
+  const topRow = el("div", { class: "ob-top" });
+  topRow.appendChild(el("div", { class: "ob-progress" }, `レッスン ${obIndex + 1} / ${ONBOARDING_STEPS.length}`));
+  topRow.appendChild(
+    el(
+      "button",
+      {
+        class: "btn-secondary",
+        onclick: () => {
+          completeOnboarding();
+          render();
+        },
+      },
+      "スキップ"
+    )
+  );
+  wrap.appendChild(topRow);
+
+  const card = el("div", { class: "ob-card" });
+  card.appendChild(el("h2", {}, step.title));
+  for (const p of step.paragraphs) card.appendChild(el("p", {}, p));
+  if (step.diagram === "gamete") card.appendChild(gameteDiagram(["A", "a"], ["A", "a"], "#f2c9a0", "#f2c9a0"));
+
+  if (step.type === "read") {
+    card.appendChild(obNavButtons(true));
+  }
+
+  if (step.type === "breed-demo") {
+    const parentRow = el("div", { class: "grid" });
+    parentRow.appendChild(demoSnakeCard(step.setup.motherGenotype, "母親"));
+    parentRow.appendChild(demoSnakeCard(step.setup.fatherGenotype, "父親"));
+    card.appendChild(parentRow);
+
+    const result = obDemoResults[step.key];
+    if (!result) {
+      card.appendChild(
+        el(
+          "button",
+          {
+            class: "btn-primary",
+            onclick: () => {
+              const babies = [];
+              for (let i = 0; i < step.setup.clutchSize; i++) babies.push(breed(step.setup.motherGenotype, step.setup.fatherGenotype));
+              obDemoResults[step.key] = babies;
+              render();
+            },
+          },
+          `交配して卵を${step.setup.clutchSize}個孵化させる`
+        )
+      );
+    } else {
+      const grid = el("div", { class: "grid" });
+      for (const g of result) grid.appendChild(demoSnakeCard(g));
+      card.appendChild(grid);
+      for (const line of step.explain(result)) card.appendChild(el("p", { class: "ob-explain" }, line));
+      card.appendChild(obNavButtons(true));
+    }
+  }
+
+  if (step.type === "predict") {
+    const parentRow = el("div", { class: "grid" });
+    parentRow.appendChild(demoSnakeCard(step.setup.motherGenotype, "母親"));
+    parentRow.appendChild(demoSnakeCard(step.setup.fatherGenotype, "父親"));
+    card.appendChild(parentRow);
+
+    const optList = el("div", { class: "ob-options" });
+    for (const opt of step.options) {
+      const checked = obPredictSelection.has(opt.id);
+      const btn = el(
+        "button",
+        {
+          class: "ob-option" + (checked ? " checked" : "") + (obPredictRevealed ? (step.correctIds.includes(opt.id) ? " correct" : checked ? " wrong" : "") : ""),
+          onclick: () => {
+            if (obPredictRevealed) return;
+            if (obPredictSelection.has(opt.id)) obPredictSelection.delete(opt.id);
+            else obPredictSelection.add(opt.id);
+            render();
+          },
+        },
+        opt.label
+      );
+      optList.appendChild(btn);
+    }
+    card.appendChild(optList);
+
+    if (!obPredictRevealed) {
+      card.appendChild(
+        el(
+          "button",
+          {
+            class: "btn-primary",
+            onclick: () => {
+              obPredictRevealed = true;
+              render();
+            },
+          },
+          "これで決定"
+        )
+      );
+    } else {
+      card.appendChild(
+        el(
+          "p",
+          { class: "ob-explain" },
+          "緑＝実際に生まれうる見た目、赤＝選んだが実際には生まれない見た目です。パステルもアルビノも両親のどちらかしか持っていないため、2つ揃わないと見た目には出ません。"
+        )
+      );
+      if (!obPredictActual) {
+        card.appendChild(
+          el(
+            "button",
+            {
+              class: "btn-primary",
+              onclick: () => {
+                const babies = [];
+                for (let i = 0; i < step.setup.clutchSize; i++) babies.push(breed(step.setup.motherGenotype, step.setup.fatherGenotype));
+                obPredictActual = babies;
+                render();
+              },
+            },
+            "実際に交配してみる"
+          )
+        );
+      } else {
+        const grid = el("div", { class: "grid" });
+        for (const g of obPredictActual) grid.appendChild(demoSnakeCard(g));
+        card.appendChild(grid);
+        card.appendChild(obNavButtons(true));
+      }
+    }
+  }
+
+  if (step.type === "done") {
+    card.appendChild(
+      el(
+        "button",
+        {
+          class: "btn-primary",
+          onclick: () => {
+            for (const key of Object.keys(obDemoResults)) {
+              for (const g of obDemoResults[key]) grantSnakeFromGenotype(g);
+            }
+            if (obPredictActual) for (const g of obPredictActual) grantSnakeFromGenotype(g);
+            completeOnboarding();
+            render();
+          },
+        },
+        "はじめる！"
+      )
+    );
+  }
+
+  wrap.appendChild(card);
+  return wrap;
 }
 
 render();

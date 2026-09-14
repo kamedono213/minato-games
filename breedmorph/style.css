@@ -124,6 +124,36 @@ body {
 
 .punnett-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-bottom: 4px; }
 
+.onboarding { padding-block: 16px; }
+.ob-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.ob-progress { font-family: "Zen Maru Gothic", sans-serif; font-weight: 800; color: var(--accent); font-size: 13px; }
+.ob-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.ob-card h2 { font-family: "Zen Maru Gothic", sans-serif; margin-top: 0; }
+.ob-card p { line-height: 1.8; font-size: 14.5px; }
+.ob-explain { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+.ob-nav { display: flex; gap: 10px; margin-top: 16px; }
+.ob-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.ob-option {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.ob-option.checked { border-color: var(--accent); background: var(--accent); color: var(--accent-contrast); }
+.ob-option.correct { border-color: transparent; background: oklch(0.6 0.13 150); color: #fff; }
+.ob-option.wrong { border-color: transparent; background: oklch(0.58 0.16 25); color: #fff; }
+
 .tabbar {
   display: flex;
   gap: 8px;
@@ -178,6 +208,8 @@ body {
 .snake-art { line-height: 0; }
 .snake-name { font-family: "Zen Maru Gothic", sans-serif; font-weight: 700; font-size: 15px; }
 .snake-morph { color: var(--text-muted); font-size: 13px; min-height: 18px; }
+.mutation-badge { font-size: 12px; font-weight: 800; color: var(--accent-2-contrast); background: var(--accent-2); padding: 3px 10px; border-radius: 999px; }
+.snake-mutation-note, .snake-flare-note { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
 .snake-price { font-weight: 800; color: var(--accent-2-contrast); background: var(--accent-2); padding: 4px 12px; border-radius: 999px; font-size: 13px; }
 .snake-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 

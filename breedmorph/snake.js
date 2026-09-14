@@ -8,19 +8,62 @@ function specimenNumber(snake) {
   return "#" + snake.id.slice(1);
 }
 
+// ---- 個体差・偶発イベントのパラメータ ----
+// 「ヘテロ個体の一部にわずかな特徴（het tell）が出ることがある」というブリーダー界隈の言説の再現。
+// 確実な判別方法ではないため、あくまで見た目のゆらぎとして低確率で表現する。
+const HET_TELL_CHANCE = 0.12;
+// 突然変異: 実際のボールパイソンの新モルフも、もとは通常の繁殖の中で偶然発見されてきた。
+// ゲーム上の演出として、既存の遺伝子プールの中から低確率で「本来持っていないはずの遺伝子」が
+// 発現することがある、という形で再現する（現実の突然変異の発生率とは無関係の、ゲーム的な確率設定）。
+const MUTATION_CHANCE = 0.015;
+
+function computeFlareTraits(genotype) {
+  const flares = [];
+  for (const g of GENES) {
+    if (g.type === GENE_TYPE.RECESSIVE && genotype[g.id] === 1 && Math.random() < HET_TELL_CHANCE) {
+      flares.push(g.id);
+    }
+  }
+  return flares;
+}
+
+function maybeApplyMutation(genotype) {
+  if (Math.random() >= MUTATION_CHANCE) return null;
+  const candidates = GENES.filter((g) => (genotype[g.id] ?? 0) === 0);
+  if (candidates.length === 0) return null;
+  const gene = candidates[Math.floor(Math.random() * candidates.length)];
+  genotype[gene.id] = gene.type === GENE_TYPE.RECESSIVE ? 2 : 1;
+  return gene.id;
+}
+
 function createFounder(genotype, sex) {
-  return { id: makeId(), sex, genotype, motherId: null, fatherId: null, generation: 0 };
+  return {
+    id: makeId(),
+    sex,
+    genotype,
+    motherId: null,
+    fatherId: null,
+    generation: 0,
+    visualSeed: Math.floor(Math.random() * 2 ** 31),
+    flareTraits: computeFlareTraits(genotype),
+    mutationGeneId: null,
+  };
 }
 
 function createChild(mother, father) {
   const sex = Math.random() < 0.5 ? "male" : "female";
+  const genotype = breed(mother.genotype, father.genotype);
+  const mutationGeneId = maybeApplyMutation(genotype);
   return {
     id: makeId(),
     sex,
-    genotype: breed(mother.genotype, father.genotype),
+    genotype,
     motherId: mother.id,
     fatherId: father.id,
     generation: Math.max(mother.generation, father.generation) + 1,
+    visualSeed: Math.floor(Math.random() * 2 ** 31),
+    flareTraits: computeFlareTraits(genotype),
+    mutationGeneId,
   };
 }
 
@@ -143,6 +186,7 @@ function buildInitialWorld() {
     money: START_MONEY,
     discovered: [],
     orders: [],
+    onboardingDone: false,
   };
   while (world.orders.length < ORDER_SLOTS) world.orders.push(makeOrder());
   return world;
@@ -250,6 +294,34 @@ function fulfillOrder(orderId, snakeId) {
   w.orders.push(makeOrder());
   saveWorld();
   return true;
+}
+
+// チュートリアルで生まれた個体を、実際のコレクションに正式な個体として迎え入れる
+function grantSnakeFromGenotype(genotype, sex) {
+  const w = loadWorld();
+  if (w.myCollection.length >= CAGE_LIMIT) return null;
+  const snake = {
+    id: makeId(),
+    sex: sex || (Math.random() < 0.5 ? "male" : "female"),
+    genotype,
+    motherId: null,
+    fatherId: null,
+    generation: 0,
+    visualSeed: Math.floor(Math.random() * 2 ** 31),
+    flareTraits: computeFlareTraits(genotype),
+    mutationGeneId: null,
+  };
+  w.snakes[snake.id] = snake;
+  w.myCollection.push(snake.id);
+  recordDiscoveries(w, snake);
+  saveWorld();
+  return snake;
+}
+
+function completeOnboarding() {
+  const w = loadWorld();
+  w.onboardingDone = true;
+  saveWorld();
 }
 
 function pedigreeOf(snakeId, depth) {
