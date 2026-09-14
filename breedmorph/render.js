@@ -1,6 +1,8 @@
-// 遺伝子型からSVGスネークイラストを生成する（レトロ・ドット絵ではなくフラットなベクター表現）
-// snake.visualSeed を使って、同じモルフでも個体ごとに模様・色味が少しずつ変わるようにする
-// （実際のボールパイソンも同じモルフ内で個体差があることの再現）。
+// 遺伝子型からSVGスネークイラストを生成する。
+// 「無地のとぐろベース」の上に、モルフごとの模様レイヤーをマスクで重ねる方式。
+// snake.patternSeed を使って模様の配置が個体ごとに変わる（弱めに親から遺伝する、snake.js参照）。
+
+let renderCounter = 0;
 
 function mulberry32(seed) {
   let a = seed >>> 0;
@@ -14,12 +16,15 @@ function mulberry32(seed) {
 }
 
 function seedFromSnake(snake) {
-  if (snake && typeof snake.visualSeed === "number") return snake.visualSeed;
+  if (snake && typeof snake.patternSeed === "number") return snake.patternSeed;
   return 12345; // 図鑑など個体を持たない表示用の固定シード
 }
 
+// 体の地色を変えない形質（パッチ・お腹だけの形質など）はベースカラー選びから除外する
+const NON_RECOLOR_TRAIT_IDS = new Set(["piebald", "yellowBelly"]);
+
 function baseColorFor(traits) {
-  const colorTrait = traits.find((t) => t.gene && t.gene.color && t.form !== "bel" && t.form !== "het");
+  const colorTrait = traits.find((t) => t.gene && t.gene.color && t.form !== "bel" && t.form !== "het" && !NON_RECOLOR_TRAIT_IDS.has(t.id));
   if (colorTrait) return colorTrait.gene.color;
   const belTrait = traits.find((t) => t.form === "bel" || t.form === "het");
   if (belTrait) {
@@ -27,16 +32,34 @@ function baseColorFor(traits) {
       const alleleId = belTrait.id.replace("bel-het-", "");
       return BEL_ALLELE_BY_ID[alleleId].color;
     }
-    return "#dfe6e8";
+    return BEL_LOCUS.belColor;
   }
-  return "#6b8f5a"; // ノーマル(野生型)のオリーブグリーン
+  return "#b8895a"; // ノーマル(野生型): 実際の色に合わせた黄土色〜茶色
 }
 
 function hasTrait(traits, id) {
   return traits.some((t) => t.id === id);
 }
 
-// snake引数はオプション（省略時は図鑑用の固定表示になる）
+// とぐろ(スパイラル)の骨格になる座標列を作る
+function spiralPoints(cx, cy, rOuter, rInner, turns, steps) {
+  const pts = [];
+  const thetaMax = turns * Math.PI * 2;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const theta = t * thetaMax;
+    const r = rOuter - (rOuter - rInner) * t;
+    const x = cx + r * Math.cos(theta);
+    const y = cy + r * Math.sin(theta) * 0.74;
+    pts.push([x, y]);
+  }
+  return pts;
+}
+
+function pathFromPoints(pts) {
+  return "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
+}
+
 function svgSnake(genotype, size, snake) {
   const traits = resolvePhenotype(genotype);
   const base = baseColorFor(traits);
@@ -50,66 +73,98 @@ function svgSnake(genotype, size, snake) {
 
   const rand = mulberry32(seedFromSnake(snake));
   const jitter = (range) => (rand() - 0.5) * 2 * range;
-  const shadeOpacity = 0.06 + rand() * 0.06;
+
+  renderCounter++;
+  const uid = "sn" + renderCounter;
+
+  // --- とぐろの骨格 ---
+  const cx = 110,
+    cy = 122;
+  const rOuter = 74 + jitter(4);
+  const rInner = 20;
+  const turns = 2.1;
+  const bodyWidth = 25;
+  const pts = spiralPoints(cx, cy, rOuter, rInner, turns, 72);
+  const bodyPath = pathFromPoints(pts);
+
+  const tail = pts[0];
+  const neck = pts[pts.length - 1];
+  const headX = neck[0] + (cx - neck[0]) * 0.15 + 8;
+  const headY = neck[1] - 14;
+  const headR = 20;
+
+  const shadeOpacity = 0.05 + rand() * 0.06;
   const shadeIsLight = rand() < 0.5;
+  const eyeColor = isAlbino ? "#e05a6a" : isBelLike ? "#3f8fd6" : "#1c1c1c";
+  const patternColor = GENE_BY_ID.albino.patternColor && isAlbino ? GENE_BY_ID.albino.patternColor : hasTrait(traits, "blackPastel") ? GENE_BY_ID.blackPastel.patternColor : "#2b1d14";
 
-  const eyeColor = isAlbino || isBelLike ? "#e05a5a" : "#1c1c1c";
+  // --- 模様レイヤー（bodymaskで、とぐろの形にだけ切り抜かれる）---
+  let pattern = "";
+  const scatter = (count, make) => {
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2 + jitter(0.6);
+      const rr = rInner + rand() * (rOuter - rInner);
+      const px = cx + rr * Math.cos(a * turns * 1.3) + jitter(20);
+      const py = cy + rr * Math.sin(a * turns * 1.3) * 0.74 + jitter(20);
+      pattern += make(px, py, i);
+    }
+  };
 
-  let patternSvg = "";
-  if (isPiebald) {
-    patternSvg += `<ellipse cx="${118 + jitter(10)}" cy="${60 + jitter(6)}" rx="${30 + jitter(6)}" ry="16" fill="#ffffff" opacity="0.92"/>`;
-    patternSvg += `<ellipse cx="${70 + jitter(10)}" cy="${72 + jitter(6)}" rx="${18 + jitter(4)}" ry="10" fill="#ffffff" opacity="0.85"/>`;
+  if (isBelLike) {
+    // 実際のBELは無地・模様なしとされるため、他の形質があっても模様は付けない
+  } else if (isPiebald) {
+    scatter(3, (px, py) => `<ellipse cx="${px}" cy="${py}" rx="${20 + jitter(8)}" ry="${14 + jitter(5)}" fill="#ffffff" opacity="0.95"/>`);
+  } else if (isSpider) {
+    scatter(14, (px, py) => `<path d="M ${px} ${py} q 7 -10 14 0 q -7 10 -14 0" stroke="${patternColor}" stroke-width="1.6" fill="none" opacity="${0.55 + jitter(0.15)}"/>`);
+  } else if (isLeopard) {
+    scatter(10, (px, py) => `<circle cx="${px}" cy="${py}" r="${6 + jitter(2)}" fill="${patternColor}" opacity="0.4"/>`);
+  } else if (isClown) {
+    scatter(6, (px, py) => `<ellipse cx="${px}" cy="${py}" rx="${16 + jitter(6)}" ry="${9 + jitter(3)}" fill="${patternColor}" opacity="0.32" transform="rotate(${jitter(30)} ${px} ${py})"/>`);
+  } else {
+    // ノーマル系: サドル状の楕円もようを鎖状に
+    scatter(9, (px, py) => `<ellipse cx="${px}" cy="${py}" rx="14" ry="9" fill="${patternColor}" opacity="${0.5 + jitter(0.1)}" transform="rotate(${jitter(25)} ${px} ${py})"/>`);
   }
-  if (isSpider) {
-    for (let i = 0; i < 6; i++) {
-      const cx = 40 + i * 22 + jitter(4);
-      patternSvg += `<path d="M ${cx} ${55 + jitter(3)} q 6 -14 12 0 q 6 14 -12 0" stroke="#3a2a1a" stroke-width="1.4" fill="none" opacity="${0.5 + jitter(0.15)}"/>`;
-    }
-  }
-  if (isPinstripe) {
-    patternSvg += `<line x1="20" y1="${50 + jitter(3)}" x2="180" y2="${50 + jitter(3)}" stroke="#3a2a1a" stroke-width="2" opacity="0.5"/>`;
-  }
-  if (isLeopard) {
-    for (let i = 0; i < 8; i++) {
-      patternSvg += `<circle cx="${30 + i * 20 + jitter(4)}" cy="${45 + (i % 2 === 0 ? -6 : 6) + jitter(4)}" r="${6 + jitter(1.5)}" fill="#3a2a1a" opacity="0.35"/>`;
-    }
-  }
-  if (isClown) {
-    patternSvg += `<path d="M 30 60 Q 100 ${20 + jitter(6)} 170 60" stroke="#3a2a1a" stroke-width="3" fill="none" opacity="0.4"/>`;
-  }
-  if (!isPiebald && !isSpider && !isPinstripe && !isLeopard && !isClown) {
-    for (let i = 0; i < 5; i++) {
-      patternSvg += `<ellipse cx="${45 + i * 28 + jitter(5)}" cy="${60 + jitter(4)}" rx="12" ry="8" fill="#000000" opacity="${0.1 + jitter(0.05)}"/>`;
-    }
+  if (isPinstripe && !isBelLike) {
+    pattern += `<path d="${bodyPath}" fill="none" stroke="${patternColor}" stroke-width="1.6" opacity="0.4" stroke-dasharray="1 10" stroke-linecap="round"/>`;
   }
 
-  // ヘテロ個体の一部にごくわずかに出るとされる「het tell」の表現（確実な判別法ではない旨は図鑑側に記載）
+  // ヘテロ個体にごくわずかに出るとされる「het tell」marker
   let flareSvg = "";
   if (snake && snake.flareTraits && snake.flareTraits.length > 0) {
     for (const geneId of snake.flareTraits) {
       const gene = GENE_BY_ID[geneId];
       if (!gene) continue;
-      flareSvg += `<ellipse cx="${95 + jitter(20)}" cy="${52 + jitter(6)}" rx="5" ry="3" fill="${gene.color}" opacity="0.5"/>`;
+      flareSvg += `<circle cx="${cx + jitter(30)}" cy="${cy + jitter(20)}" r="4" fill="${gene.color}" opacity="0.55"/>`;
     }
   }
 
   let mutationSvg = "";
   if (snake && snake.mutationGeneId) {
-    mutationSvg = `<g transform="translate(28,20)">
-      <path d="M8 0 L10 6 L16 8 L10 10 L8 16 L6 10 L0 8 L6 6 Z" fill="#f2c14e" stroke="#8a5a00" stroke-width="0.6"/>
+    mutationSvg = `<g transform="translate(${headX + 16},${headY - 22})">
+      <path d="M8 0 L10.5 6 L17 8 L10.5 10 L8 17 L5.5 10 L0 8 L5.5 6 Z" fill="#f2c14e" stroke="#8a5a00" stroke-width="0.6"/>
     </g>`;
   }
 
   return `
-  <svg viewBox="0 0 200 120" width="${size}" height="${size * 0.6}" xmlns="http://www.w3.org/2000/svg">
-    <path d="M 15 80 Q 10 50 40 45 Q 90 35 130 50 Q 165 60 185 45"
-      stroke="${base}" stroke-width="34" fill="none" stroke-linecap="round"/>
-    <path d="M 15 80 Q 10 50 40 45 Q 90 35 130 50 Q 165 60 185 45"
-      stroke="${shadeIsLight ? "#ffffff" : "#000000"}" stroke-width="34" fill="none" stroke-linecap="round" opacity="${shadeOpacity}"/>
-    ${patternSvg}
+  <svg viewBox="0 0 220 220" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+    <mask id="${uid}">
+      <path d="${bodyPath}" stroke="#fff" stroke-width="${bodyWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${headX}" cy="${headY}" r="${headR}" fill="#fff"/>
+    </mask>
+
+    <path d="${bodyPath}" stroke="${base}" stroke-width="${bodyWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${headX}" cy="${headY}" r="${headR}" fill="${base}"/>
+
+    <path d="${bodyPath}" stroke="${shadeIsLight ? "#ffffff" : "#000000"}" stroke-width="${bodyWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="${shadeOpacity}"/>
+
+    <g mask="url(#${uid})">${pattern}</g>
     ${flareSvg}
-    <circle cx="188" cy="44" r="10" fill="${base}"/>
-    <circle cx="192" cy="41" r="2.4" fill="${eyeColor}"/>
+
+    <!-- 舌 -->
+    <path d="M ${headX + headR - 4} ${headY} q 10 2 14 -4 M ${headX + headR + 8} ${headY - 4} l 5 -4 M ${headX + headR + 8} ${headY - 4} l 5 3"
+      stroke="#c0392b" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+
+    <circle cx="${headX + 7}" cy="${headY - 6}" r="3.2" fill="${eyeColor}"/>
     ${mutationSvg}
   </svg>`;
 }

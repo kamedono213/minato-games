@@ -135,7 +135,7 @@ function snakeLabel(snake) {
 
 function snakeCard(snake, opts = {}) {
   const wrapper = el("div", { class: "snake-card" });
-  wrapper.appendChild(el("div", { class: "snake-art", html: svgSnake(snake.genotype, 160, snake) }));
+  wrapper.appendChild(el("div", { class: "snake-art", html: svgSnake(snake.genotype, 178, snake) }));
   if (snake.mutationGeneId) wrapper.appendChild(el("div", { class: "mutation-badge" }, "✨ 突然変異！"));
   wrapper.appendChild(el("div", { class: "snake-name" }, snakeLabel(snake)));
   wrapper.appendChild(el("div", { class: "snake-morph" }, morphLabel(snake.genotype)));

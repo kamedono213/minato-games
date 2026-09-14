@@ -36,6 +36,26 @@ function maybeApplyMutation(genotype) {
   return gene.id;
 }
 
+// もようの「個体差シード」。親から弱めに遺伝させることで、交配で生まれた子が
+// 親のどちらかのもようの雰囲気を薄く受け継ぐことがあるようにする（社長指定: やや弱め）。
+const PATTERN_INHERIT_CHANCE = 0.3;
+const PATTERN_INHERIT_JITTER = 4.0e8;
+const SEED_MAX = 2 ** 31;
+
+function randomPatternSeed() {
+  return Math.floor(Math.random() * SEED_MAX);
+}
+
+function inheritedPatternSeed(mother, father) {
+  if (Math.random() < PATTERN_INHERIT_CHANCE) {
+    const parent = Math.random() < 0.5 ? mother : father;
+    const base = parent.patternSeed ?? randomPatternSeed();
+    const jitter = Math.floor((Math.random() - 0.5) * 2 * PATTERN_INHERIT_JITTER);
+    return Math.abs((base + jitter) % SEED_MAX);
+  }
+  return randomPatternSeed();
+}
+
 function createFounder(genotype, sex) {
   return {
     id: makeId(),
@@ -44,7 +64,7 @@ function createFounder(genotype, sex) {
     motherId: null,
     fatherId: null,
     generation: 0,
-    visualSeed: Math.floor(Math.random() * 2 ** 31),
+    patternSeed: randomPatternSeed(),
     flareTraits: computeFlareTraits(genotype),
     mutationGeneId: null,
   };
@@ -61,7 +81,7 @@ function createChild(mother, father) {
     motherId: mother.id,
     fatherId: father.id,
     generation: Math.max(mother.generation, father.generation) + 1,
-    visualSeed: Math.floor(Math.random() * 2 ** 31),
+    patternSeed: inheritedPatternSeed(mother, father),
     flareTraits: computeFlareTraits(genotype),
     mutationGeneId,
   };
@@ -315,7 +335,7 @@ function grantSnakeFromGenotype(genotype, sex) {
     motherId: null,
     fatherId: null,
     generation: 0,
-    visualSeed: Math.floor(Math.random() * 2 ** 31),
+    patternSeed: randomPatternSeed(),
     flareTraits: computeFlareTraits(genotype),
     mutationGeneId: null,
   };
