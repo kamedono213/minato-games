@@ -1,6 +1,7 @@
 // ゲーム開始時のガイド付きチュートリアル。
-// 読む→実際に交配して結果を見る→予想してから交配する、の順で進める。
-// 完了後は世界(world)のonboardingDoneフラグを立てて通常プレイに戻る。
+// できるだけ簡単な言葉で、「1つ学んだらすぐ交配して確かめる」をテンポよく繰り返す構成にする。
+// 学校の理科の正式な言葉（顕性・潜性）は使いつつ、まず身近な言い換え（目立つタイプ・かくれるタイプ）で
+// イメージをつかんでもらう。
 
 function demoGenotype(traitSpec) {
   const g = wildGenotype();
@@ -14,123 +15,180 @@ const PREDICT_OPTIONS = [
   { id: "albino", label: "アルビノ", genes: { albino: 2 } },
   { id: "pastel-albino", label: "パステルアルビノ", genes: { pastel: 1, albino: 2 } },
   { id: "super-pastel", label: "スーパーパステル", genes: { pastel: 2 } },
-  { id: "spider", label: "スパイダー", genes: { spider: 1 } }, // 分布に絡まない誤答（親が持っていない）
-  { id: "clown", label: "クラウン", genes: { clown: 2 } }, // 誤答
+  { id: "spider", label: "スパイダー", genes: { spider: 1 } },
+  { id: "clown", label: "クラウン", genes: { clown: 2 } },
 ];
 
 const ONBOARDING_STEPS = [
   {
     type: "read",
-    title: "ようこそ、ブリードモルフへ",
-    paragraphs: [
-      "このゲームでは、実際のボールパイソンの遺伝ルールに沿って交配を楽しめます。",
-      "まずは短いレッスンで「遺伝の仕組み」を、実際に交配しながら覚えていきましょう。",
-    ],
+    title: "ようこそ！",
+    paragraphs: ["このゲームでは、本物のヘビの「遺伝」のルールで交配を楽しめる。", "むずかしそうに見えるけど、実は簡単。実際に交配しながら覚えていこう！"],
   },
+
+  // --- レッスン1: せっけいず（遺伝子）の基本 ---
   {
     type: "read",
-    title: "「遺伝子」と「対立遺伝子」",
-    paragraphs: TUTORIAL_STEPS[0].paragraphs,
+    title: "① 体は「せっけいず」でできている",
+    paragraphs: [
+      "生き物の体の色やもようは、体の中にある目に見えない「せっけいず」で決まっている。",
+      "このせっけいずは、お父さんから1まい、お母さんから1まい、合わせて2まいもらう。",
+    ],
     diagram: "gamete",
   },
   {
     type: "read",
-    title: "顕性（優性）と潜性（劣性）",
-    paragraphs: TUTORIAL_STEPS[1].paragraphs,
+    title: "② 「目立つタイプ」と「かくれるタイプ」",
+    paragraphs: [
+      "せっけいずには2種類ある。",
+      "【目立つタイプ】1まいでも見た目に出る",
+      "【かくれるタイプ】2まいそろわないと見た目に出ない（1まいだけだと見た目はふつうのまま、こっそり隠れている）",
+      "学校の理科では「目立つタイプ＝顕性（けんせい）」「かくれるタイプ＝潜性（せんせい）」と習うよ。むかしは「優性・劣性」と呼ばれていたけど、今はこの呼び方に変わった。",
+    ],
   },
   {
     type: "breed-demo",
     key: "albino-demo",
-    title: "実際にやってみよう：アルビノ",
+    title: "③ さっそく交配！「かくれるタイプ」を試そう",
     paragraphs: [
-      "ここに、どちらも「アルビノを1つだけ持つ（ヘテロ）」オスとメスがいます。見た目はふつうですが、体の中にはアルビノの対立遺伝子が1つ隠れています。",
-      "この2匹を交配すると何が生まれるでしょうか？ボタンを押して実際に4個の卵を孵化させてみましょう。",
+      "アルビノは「かくれるタイプ」。",
+      "ここにいる2匹は、どちらも見た目はふつうだけど、アルビノのせっけいずを1まいだけこっそり持っている（これを「ヘテロ」と呼ぶ）。",
     ],
-    setup: {
-      motherGenotype: demoGenotype({ albino: 1 }),
-      fatherGenotype: demoGenotype({ albino: 1 }),
-      clutchSize: 4,
-    },
+    predictText: "よそう：4匹生まれたら、だいたい1匹くらいがアルビノになるはず（4匹に1匹の確率だから）。",
+    setup: { motherGenotype: demoGenotype({ albino: 1 }), fatherGenotype: demoGenotype({ albino: 1 }), clutchSize: 4 },
+    breedLabel: "交配して確かめる",
     explain: (babies) => {
       const albinoCount = babies.filter((g) => (g.albino ?? 0) === 2).length;
       return [
-        `生まれた4匹のうち、${albinoCount}匹がアルビノになりました。`,
-        "理論上は、ヘテロ同士の交配でアルビノが生まれる確率は4分の1（25%）です。ただしこれはあくまで確率で、サイコロを4回振るのと同じように、毎回ぴったり1匹になるとは限りません。",
-        "生まれなかった子も、実は見た目に出ていないだけでアルビノの対立遺伝子を持っている（ヘテロ）可能性があります。",
+        `結果：${albinoCount}匹がアルビノだった！`,
+        "ぴったり1匹になるとは限らない。サイコロと同じで、運によって毎回すこし変わる。",
+        "アルビノにならなかった子も、実はアルビノのせっけいずを1まいだけ隠し持っているかもしれない。",
       ];
     },
   },
+
+  // --- レッスン2: 目立つタイプ ---
   {
     type: "breed-demo",
     key: "spider-demo",
-    title: "実際にやってみよう：スパイダー（顕性）",
+    title: "④ 今度は「目立つタイプ」を試そう",
     paragraphs: [
-      "次は顕性（優性）の例です。スパイダーを1つ持つオスと、何も持たないふつうのメスを交配します。",
-      "顕性は「1つ持っているだけで見た目に出る」タイプでした。結果を見てみましょう。",
+      "スパイダーは「目立つタイプ」。1まいでも見た目に出る。",
+      "お父さんはスパイダーのせっけいずを1まい持っている（見た目にスパイダー模様が出ている）。お母さんは持っていない、ふつうのヘビ。",
     ],
-    setup: {
-      motherGenotype: demoGenotype({}),
-      fatherGenotype: demoGenotype({ spider: 1 }),
-      clutchSize: 4,
-    },
+    predictText: "よそう：4匹生まれたら、だいたい半分（2匹くらい）がスパイダーになるはず。",
+    setup: { motherGenotype: demoGenotype({}), fatherGenotype: demoGenotype({ spider: 1 }), clutchSize: 4 },
+    breedLabel: "交配して確かめる",
     explain: (babies) => {
       const spiderCount = babies.filter((g) => (g.spider ?? 0) >= 1).length;
       return [
-        `生まれた4匹のうち、${spiderCount}匹がスパイダーの見た目になりました。`,
-        "顕性の遺伝子を1つ持つ親と、持たない親を交配すると、理論上は約半分（50%）の子に見た目が出ます。",
-        "潜性（劣性）と違って「隠れている」ということが起きにくいのが顕性の特徴です。",
+        `結果：${spiderCount}匹がスパイダーだった！`,
+        "「目立つタイプ」は1まい持っているだけで見た目に出るから、「かくれるタイプ」より見た目に出やすい。",
       ];
     },
+  },
+
+  // --- レッスン3: 混ざるタイプ ---
+  {
+    type: "read",
+    title: "⑤ もう1つ、「混ざるタイプ」もある",
+    paragraphs: [
+      "「目立つ」でも「かくれる」でもない、3つ目のタイプがある。",
+      "1まいだけでも見た目に出るけど、2まいそろうと「もっと強く」見た目に出るタイプ。",
+      "パステルがこのタイプ。1まいだと「パステル」、2まいだと「スーパーパステル」になる。",
+    ],
   },
   {
     type: "breed-demo",
     key: "pastel-demo",
-    title: "実際にやってみよう：パステル（不完全顕性）",
-    paragraphs: [
-      "最後に不完全顕性・共優性の例です。パステルを1つ持つ者同士を交配します。",
-      "1つの時と2つの時で見た目が違うタイプでした。何が生まれるでしょうか。",
-    ],
-    setup: {
-      motherGenotype: demoGenotype({ pastel: 1 }),
-      fatherGenotype: demoGenotype({ pastel: 1 }),
-      clutchSize: 4,
-    },
+    title: "⑥ 「混ざるタイプ」を交配してみよう",
+    paragraphs: ["パステルを1まい持つ者どうしを交配する。何が生まれるかな？"],
+    predictText: "よそう：ノーマル・パステル・スーパーパステルが、だいたい 1 : 2 : 1 の割合で生まれるはず。",
+    setup: { motherGenotype: demoGenotype({ pastel: 1 }), fatherGenotype: demoGenotype({ pastel: 1 }), clutchSize: 4 },
+    breedLabel: "交配して確かめる",
     explain: (babies) => {
       const superCount = babies.filter((g) => (g.pastel ?? 0) === 2).length;
       const pastelCount = babies.filter((g) => (g.pastel ?? 0) === 1).length;
       const normalCount = babies.filter((g) => (g.pastel ?? 0) === 0).length;
+      return [`結果：ノーマル ${normalCount}匹、パステル ${pastelCount}匹、スーパーパステル ${superCount}匹だった！`, "1まいの時と2まいの時で見た目が変わる、というのが「混ざるタイプ」の特徴。"];
+    },
+  },
+
+  {
+    type: "read",
+    title: "⑦ 表で予想する方法（パネットスクエア）",
+    paragraphs: [
+      "実は、生まれる前から「どんな割合になりそうか」を表で予想できる。",
+      "たて・よこに、それぞれの親が持っているせっけいずを並べて、交わったマスが子どもの組み合わせになる。",
+      "さっきの実験も、この表の通りの割合に近づいていたはず。",
+    ],
+  },
+
+  {
+    type: "predict",
+    title: "⑧ 卒業テスト：自分で予想してみよう",
+    paragraphs: ["パステルを1まい持つメスと、アルビノを1まい持つオスを交配する。", "生まれてくる子には、どんな見た目がありえる？ 当てはまるものを全部えらんでね。"],
+    setup: { motherGenotype: demoGenotype({ pastel: 1 }), fatherGenotype: demoGenotype({ albino: 1 }), clutchSize: 4 },
+    options: PREDICT_OPTIONS,
+    correctIds: ["normal", "pastel"],
+  },
+
+  // --- 復習レッスン ---
+  {
+    type: "read",
+    title: "⑨ ここから復習レッスン",
+    paragraphs: ["新しいことは教えない。ここまで学んだことを使って、いくつか予想して確かめてみよう。"],
+  },
+  {
+    type: "breed-demo",
+    key: "review-spider-spider",
+    title: "復習1：スパイダー×スパイダー",
+    review: true,
+    paragraphs: ["スパイダー（目立つタイプ）を持つ者どうしを交配したらどうなる？", "実は「スパイダーが2まい」になる組み合わせは、実際のブリーダーの間でもほとんど育たないと言われている。"],
+    predictText: "よそう：多くはノーマルかスパイダーになるはず。まれに「2まいの組み合わせ」が出ることもある。",
+    setup: { motherGenotype: demoGenotype({ spider: 1 }), fatherGenotype: demoGenotype({ spider: 1 }), clutchSize: 4 },
+    breedLabel: "交配して確かめる",
+    explain: (babies) => {
+      const counts = { 0: 0, 1: 0, 2: 0 };
+      for (const g of babies) counts[g.spider ?? 0]++;
       return [
-        `内訳：ノーマル ${normalCount}匹、パステル ${pastelCount}匹、スーパーパステル ${superCount}匹でした。`,
-        "理論上の比率は ノーマル:パステル:スーパーパステル = 1:2:1 です。2つとも持つと『スーパー』になる、というのが不完全顕性・共優性の特徴でしたね。",
+        `結果：ノーマル ${counts[0]}匹、スパイダー ${counts[1]}匹、スーパースパイダー(2まい) ${counts[2]}匹だった。`,
+        "「目立つタイプ」どうしをかけ合わせると、まれに2まいの組み合わせが生まれる。これが実際の繁殖では避けられることが多い理由。",
       ];
     },
   },
   {
-    type: "read",
-    title: "パネットスクエア（掛け合わせ表）",
-    paragraphs: TUTORIAL_STEPS[5].paragraphs,
+    type: "breed-demo",
+    key: "review-clown",
+    title: "復習2：クラウン ヘテロ×ヘテロ",
+    review: true,
+    paragraphs: ["クラウンも「かくれるタイプ」。アルビノの時と同じ考え方が使えるはず。"],
+    predictText: "よそう：4匹のうち、だいたい1匹くらいがクラウンになるはず。",
+    setup: { motherGenotype: demoGenotype({ clown: 1 }), fatherGenotype: demoGenotype({ clown: 1 }), clutchSize: 4 },
+    breedLabel: "交配して確かめる",
+    explain: (babies) => {
+      const clownCount = babies.filter((g) => (g.clown ?? 0) === 2).length;
+      return [`結果：${clownCount}匹がクラウンだった！`, "「かくれるタイプ」はどの遺伝子でも同じ考え方で予想できる。"];
+    },
   },
   {
-    type: "predict",
-    title: "予想してみよう",
-    paragraphs: [
-      "最後の練習です。パステルを1つ持つメスと、アルビノを1つ持つオスを交配します。",
-      "生まれてくる子には、どんな見た目の可能性があるでしょうか？ 当てはまるものをすべて選んでください。",
-    ],
-    setup: {
-      motherGenotype: demoGenotype({ pastel: 1 }),
-      fatherGenotype: demoGenotype({ albino: 1 }),
-      clutchSize: 4,
+    type: "breed-demo",
+    key: "review-combo",
+    title: "復習3：組み合わせると特別な名前がつくことも",
+    review: true,
+    paragraphs: ["パステルとスパイダーを両方持つ子が生まれると、「バンブルビー」という特別な名前がつく。", "組み合わせ次第で、こんなふうに名前が変わることも覚えておこう。"],
+    predictText: "よそう：一部の子は「バンブルビー」になるはず。",
+    setup: { motherGenotype: demoGenotype({ pastel: 1 }), fatherGenotype: demoGenotype({ spider: 1 }), clutchSize: 4 },
+    breedLabel: "交配して確かめる",
+    explain: (babies) => {
+      const comboCount = babies.filter((g) => comboNameFor(g) === "バンブルビー").length;
+      return [`結果：${comboCount}匹が「バンブルビー」になった！`, "図鑑やショップでも、こういう特別な名前の組み合わせをたくさん見つけられる。"];
     },
-    options: PREDICT_OPTIONS,
-    correctIds: ["normal", "pastel"], // アルビノは母親がヘテロを持たないため両親ともホモにならず出現しない
   },
+
   {
     type: "done",
     title: "レッスン完了！",
-    paragraphs: [
-      "遺伝の基本はこれで一通り体験できました。ここまで生まれた個体は、そのままあなたのコレクションに加わります。",
-      "ここから先は自由に交配・ショップ・顧客からの依頼に挑戦できます。チュートリアルはいつでも見返せます。",
-    ],
+    paragraphs: ["これで遺伝の基本はバッチリ。ここまで生まれた個体は、そのままあなたのコレクションに加わる。", "ここから先は自由に交配・ショップ・依頼に挑戦できる。チュートリアルはいつでも見返せるよ。"],
   },
 ];

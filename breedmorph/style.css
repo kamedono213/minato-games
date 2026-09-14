@@ -137,6 +137,25 @@ body {
 .ob-card h2 { font-family: "Zen Maru Gothic", sans-serif; margin-top: 0; }
 .ob-card p { line-height: 1.8; font-size: 14.5px; }
 .ob-explain { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+.ob-predict {
+  background: var(--accent-2);
+  color: var(--accent-2-contrast);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 13.5px;
+  margin: 4px 0 14px;
+}
+.ob-review-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  margin-bottom: 8px;
+}
 .ob-nav { display: flex; gap: 10px; margin-top: 16px; }
 .ob-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 .ob-option {

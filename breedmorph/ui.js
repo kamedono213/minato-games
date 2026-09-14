@@ -495,10 +495,13 @@ function renderOnboarding() {
   }
 
   if (step.type === "breed-demo") {
+    if (step.review) card.appendChild(el("div", { class: "ob-review-badge" }, "復習"));
     const parentRow = el("div", { class: "grid" });
     parentRow.appendChild(demoSnakeCard(step.setup.motherGenotype, "母親"));
     parentRow.appendChild(demoSnakeCard(step.setup.fatherGenotype, "父親"));
     card.appendChild(parentRow);
+
+    if (step.predictText) card.appendChild(el("div", { class: "ob-predict" }, step.predictText));
 
     const result = obDemoResults[step.key];
     if (!result) {
@@ -514,7 +517,7 @@ function renderOnboarding() {
               render();
             },
           },
-          `交配して卵を${step.setup.clutchSize}個孵化させる`
+          step.breedLabel || `交配して卵を${step.setup.clutchSize}個孵化させる`
         )
       );
     } else {
