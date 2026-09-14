@@ -1,0 +1,236 @@
+:root {
+  --bg: oklch(0.965 0.015 85);
+  --surface: oklch(0.99 0.006 85);
+  --surface-2: oklch(0.93 0.022 85);
+  --border: oklch(0.85 0.025 85);
+  --text: oklch(0.26 0.025 85);
+  --text-muted: oklch(0.52 0.02 85);
+  --accent: oklch(0.5 0.1 145);
+  --accent-contrast: oklch(0.98 0.01 145);
+  --accent-2: oklch(0.68 0.14 70);
+  --accent-2-contrast: oklch(0.22 0.05 70);
+  --shadow: 0 1px 2px oklch(0.3 0.03 85 / 0.08), 0 6px 18px oklch(0.3 0.03 85 / 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: oklch(0.2 0.02 85);
+    --surface: oklch(0.26 0.022 85);
+    --surface-2: oklch(0.31 0.024 85);
+    --border: oklch(0.4 0.03 85);
+    --text: oklch(0.94 0.012 85);
+    --text-muted: oklch(0.72 0.02 85);
+    --accent: oklch(0.68 0.12 145);
+    --accent-contrast: oklch(0.14 0.03 145);
+    --accent-2: oklch(0.72 0.13 70);
+    --accent-2-contrast: oklch(0.16 0.04 70);
+    --shadow: 0 1px 2px oklch(0 0 0 / 0.4), 0 8px 22px oklch(0 0 0 / 0.35);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+  padding-inline: 16px;
+  padding-block: 0 48px;
+}
+
+.app-header {
+  max-width: 960px;
+  margin: 0 auto;
+  padding-block: 24px 8px;
+}
+.app-header h1 {
+  font-family: "Zen Maru Gothic", sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  margin: 0 0 4px;
+  color: var(--accent);
+}
+.app-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+#app { max-width: 960px; margin: 0 auto; }
+
+.tabbar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  flex-shrink: 0;
+  font-family: "Zen Maru Gothic", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tab.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: transparent;
+}
+
+.content { padding-block: 20px; }
+.content h2 {
+  font-family: "Zen Maru Gothic", sans-serif;
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+.muted { color: var(--text-muted); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.snake-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+.snake-art { line-height: 0; }
+.snake-name { font-family: "Zen Maru Gothic", sans-serif; font-weight: 700; font-size: 15px; }
+.snake-morph { color: var(--text-muted); font-size: 13px; min-height: 18px; }
+.snake-price { font-weight: 800; color: var(--accent-2-contrast); background: var(--accent-2); padding: 4px 12px; border-radius: 999px; font-size: 13px; }
+.snake-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+.btn-primary, .btn-secondary {
+  font-family: "Zen Maru Gothic", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: var(--accent-contrast); }
+.btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+
+.breed-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.breed-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.breed-form select, .breed-form input {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.dex-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.dex-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.dex-swatch { width: 100%; height: 36px; border-radius: 10px; margin-bottom: 10px; }
+.dex-name { font-family: "Zen Maru Gothic", sans-serif; font-weight: 700; font-size: 14px; }
+.dex-type { color: var(--accent); font-size: 12px; font-weight: 700; margin: 4px 0 8px; }
+.dex-note { color: var(--text-muted); font-size: 12.5px; line-height: 1.6; }
+
+.tutorial-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.tutorial-step h3 { font-family: "Zen Maru Gothic", sans-serif; margin-top: 0; }
+.tutorial-step p { line-height: 1.8; font-size: 14.5px; }
+
+table.punnett { border-collapse: collapse; margin-top: 12px; width: 100%; overflow-x: auto; display: block; }
+table.punnett th, table.punnett td { border: 1px solid var(--border); padding: 10px; text-align: center; font-size: 13px; }
+table.punnett th { background: var(--surface-2); }
+.punnett-genotype { font-weight: 800; font-family: monospace; }
+.punnett-label { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: oklch(0.15 0.02 85 / 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 10;
+}
+.modal {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 22px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+.modal h3 { font-family: "Zen Maru Gothic", sans-serif; margin-top: 0; }
+
+.pedigree-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.pedigree-node {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  text-align: center;
+  grid-column: span 1;
+}
+.pedigree-node.empty { display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+.pedigree-label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.pedigree-morph { font-size: 11px; color: var(--accent); }
+
+@media (max-width: 520px) {
+  .pedigree-grid { grid-template-columns: repeat(2, 1fr); }
+}
