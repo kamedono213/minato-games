@@ -192,6 +192,14 @@ function buildInitialWorld() {
   return world;
 }
 
+function hasSave() {
+  try {
+    return localStorage.getItem(WORLD_STORAGE_KEY) !== null;
+  } catch (e) {
+    return false;
+  }
+}
+
 let WORLD = null;
 
 function loadWorld() {

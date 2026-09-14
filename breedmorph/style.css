@@ -124,6 +124,17 @@ body {
 
 .punnett-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-bottom: 4px; }
 
+.title-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding-block: 80px 40px;
+}
+.title-logo { font-family: "Zen Maru Gothic", sans-serif; font-weight: 900; font-size: 36px; color: var(--accent); margin: 0; }
+.title-btn { width: 220px; padding: 14px; font-size: 15px; }
+
 .onboarding { padding-block: 16px; }
 .ob-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .ob-progress { font-family: "Zen Maru Gothic", sans-serif; font-weight: 800; color: var(--accent); font-size: 13px; }

@@ -21,6 +21,16 @@ let obDemoResults = {};
 let obPredictSelection = new Set();
 let obPredictRevealed = false;
 let obPredictActual = null;
+let replayingTutorial = false;
+let titleScreenActive = hasSave();
+
+function resetOnboardingState() {
+  obIndex = 0;
+  obDemoResults = {};
+  obPredictSelection = new Set();
+  obPredictRevealed = false;
+  obPredictActual = null;
+}
 
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
@@ -48,7 +58,11 @@ function showToast(text) {
 
 function render() {
   APP.innerHTML = "";
-  if (!loadWorld().onboardingDone) {
+  if (titleScreenActive) {
+    APP.appendChild(renderTitleScreen());
+    return;
+  }
+  if (replayingTutorial || !loadWorld().onboardingDone) {
     APP.appendChild(renderOnboarding());
     return;
   }
@@ -376,6 +390,22 @@ function gameteDiagram(leftAlleles, topAlleles, leftColor, topColor) {
 function renderTutorial() {
   const wrap = el("div", { class: "tutorial" });
   wrap.appendChild(el("h2", {}, "チュートリアル：遺伝のきほん"));
+  wrap.appendChild(
+    el(
+      "button",
+      {
+        class: "btn-primary",
+        style: "margin-bottom:16px;",
+        onclick: () => {
+          resetOnboardingState();
+          replayingTutorial = true;
+          render();
+        },
+      },
+      "▶ ガイド付きレッスンをもう一度あそぶ"
+    )
+  );
+  wrap.appendChild(el("p", { class: "muted small" }, "下の読み物はまとめです。実際に手を動かして学びたい時は上のボタンから。"));
   for (const step of TUTORIAL_STEPS) {
     const section = el("section", { class: "tutorial-step" });
     section.appendChild(el("h3", {}, step.title));
@@ -442,6 +472,41 @@ function renderPedigreeModal(snakeId) {
   return overlay;
 }
 
+function renderTitleScreen() {
+  const wrap = el("div", { class: "title-screen" });
+  wrap.appendChild(
+    el(
+      "button",
+      {
+        class: "btn-secondary title-btn",
+        onclick: () => {
+          titleScreenActive = false;
+          render();
+        },
+      },
+      "つづきから"
+    )
+  );
+  wrap.appendChild(
+    el(
+      "button",
+      {
+        class: "btn-primary title-btn",
+        onclick: () => {
+          resetWorld();
+          resetOnboardingState();
+          replayingTutorial = false;
+          titleScreenActive = false;
+          render();
+        },
+      },
+      "はじめから"
+    )
+  );
+  wrap.appendChild(el("p", { class: "muted small center" }, "「はじめから」を選ぶと、今のコレクション・資金はすべて消えて新しく始まります。"));
+  return wrap;
+}
+
 // ---- ガイド付きチュートリアル(オンボーディング) ----
 
 function demoSnakeCard(genotype, label) {
@@ -477,6 +542,7 @@ function renderOnboarding() {
         class: "btn-secondary",
         onclick: () => {
           completeOnboarding();
+          replayingTutorial = false;
           render();
         },
       },
@@ -614,6 +680,7 @@ function renderOnboarding() {
             }
             if (obPredictActual) for (const g of obPredictActual) grantSnakeFromGenotype(g);
             completeOnboarding();
+            replayingTutorial = false;
             render();
           },
         },
